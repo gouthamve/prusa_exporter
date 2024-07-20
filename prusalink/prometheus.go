@@ -66,11 +66,11 @@ func NewCollector(config config.Config) *Collector {
 		printerInfo:               prometheus.NewDesc("prusa_info", "Returns information about printer.", append(defaultLabels, "api_version", "server_version", "version_text", "prusalink_name", "printer_location", "serial_number", "printer_hostname"), nil),
 		printerMMU:                prometheus.NewDesc("prusa_mmu", "Returns information if MMU is enabled.", defaultLabels, nil),
 		printerFanSpeed:           prometheus.NewDesc("prusa_fan_speed_rpm", "Returns information about speed of hotend fan in rpm.", append(defaultLabels, "fan"), nil),
-		printerPrintSpeedRatio:    prometheus.NewDesc("prusa_print_speed_ratio", "Current setting of printer speed in values from 0.0 - 1.0", []string{"printer_address", "printer_model", "printer_name", "printer_job_name", "printer_job_path"}, nil),
-		printerLogs:               prometheus.NewDesc("prusa_logs", "Return size of logs in Prusa Link", []string{"printer_address", "printer_model", "printer_name", "printer_job_name", "printer_job_path", "log_name"}, nil),
-		printerLogsDate:           prometheus.NewDesc("prusa_logs_date", "Return date of logs in Prusa Link", []string{"printer_address", "printer_model", "printer_name", "printer_job_name", "printer_job_path", "log_name"}, nil),
-		printerFarmMode:           prometheus.NewDesc("prusa_farm_mode", "Return if printer is set to farm mode", []string{"printer_address", "printer_model", "printer_name", "printer_job_name", "printer_job_path"}, nil),
-		printerCameras:            prometheus.NewDesc("prusa_cameras_info", "Return information about cameras", []string{"printer_address", "printer_model", "printer_name", "printer_job_name", "printer_job_path", "camera_id", "camera_name", "camera_resolution"}, nil),
+		printerPrintSpeedRatio:    prometheus.NewDesc("prusa_print_speed_ratio", "Current setting of printer speed in values from 0.0 - 1.0", defaultLabels, nil),
+		printerLogs:               prometheus.NewDesc("prusa_logs", "Return size of logs in Prusa Link", append(defaultLabels, "log_name"), nil),
+		printerLogsDate:           prometheus.NewDesc("prusa_logs_date", "Return date of logs in Prusa Link", append(defaultLabels, "log_name"), nil),
+		printerFarmMode:           prometheus.NewDesc("prusa_farm_mode", "Return if printer is set to farm mode", defaultLabels, nil),
+		printerCameras:            prometheus.NewDesc("prusa_cameras_info", "Return information about cameras", append(defaultLabels, "camera_id", "camera_name", "camera_resolution"), nil),
 		printerCover:              prometheus.NewDesc("prusa_cover_status", "Status of the printer - 0 = open, 1 = closed", defaultLabels, nil),
 		printerAmbientTemp:        prometheus.NewDesc("prusa_ambient_temperature_celsius", "Status of the printer ambient temp", defaultLabels, nil),
 		printerCPUTemp:            prometheus.NewDesc("prusa_cpu_temperature_celsius", "Status of the printer cpu temp", defaultLabels, nil),
@@ -140,34 +140,34 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 				return
 			}
 
-			log.Debug().Msg("Printer scraping at " + cfg.Address)
+			log.Debug().Msg("Printer scraping at " + printer.Address())
 			printerUp := prometheus.MustNewConstMetric(collector.printerUp, prometheus.GaugeValue,
-				0, cfg.Address, cfg.Type, cfg.Name)
+				0, printer.GetBaseLabels()...)
 
-			job, err := printer.GetJob()
+			job, err := printer.Job()
 			if err != nil {
-				log.Error().Msg("Error while scraping job endpoint at " + cfg.Address + " - " + err.Error())
+				log.Error().Msg("Error while scraping job endpoint at " + printer.Address() + " - " + err.Error())
 				ch <- printerUp
 				return
 			}
 
-			printerdata, err := printer.GetPrinter()
+			printerdata, err := printer.Printer()
 			if err != nil {
-				log.Error().Msg("Error while scraping printer endpoint at " + cfg.Address + " - " + err.Error())
+				log.Error().Msg("Error while scraping printer endpoint at " + printer.Address() + " - " + err.Error())
 				ch <- printerUp
 				return
 			}
 
-			files, err := printer.GetFiles()
+			files, err := printer.Files()
 			if err != nil {
-				log.Error().Msg("Error while scraping files endpoint at " + cfg.Address + " - " + err.Error())
+				log.Error().Msg("Error while scraping files endpoint at " + printer.Address() + " - " + err.Error())
 				ch <- printerUp
 				return
 			}
 
-			version, err := printer.GetVersion()
+			version, err := printer.Version()
 			if err != nil {
-				log.Error().Msg("Error while scraping version endpoint at " + cfg.Address + " - " + err.Error())
+				log.Error().Msg("Error while scraping version endpoint at " + printer.Address() + " - " + err.Error())
 				ch <- printerUp
 				return
 			}
@@ -175,46 +175,46 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 			// metrics specific for both buddy and einsy
 			if printerBoards[cfg.Type] == PrinterBoardTypeBuddy || printerBoards[cfg.Type] == PrinterBoardTypeEinsy {
 
-				status, err := printer.GetStatus()
+				status, err := printer.Status()
 
 				if err != nil {
-					log.Error().Msg("Error while scraping status endpoint at " + cfg.Address + " - " + err.Error())
+					log.Error().Msg("Error while scraping status endpoint at " + printer.Address() + " - " + err.Error())
 				}
 
-				info, err := printer.GetInfo()
+				info, err := printer.Info()
 
 				if err != nil {
-					log.Error().Msg("Error while scraping info endpoint at " + cfg.Address + " - " + err.Error())
+					log.Error().Msg("Error while scraping info endpoint at " + printer.Address() + " - " + err.Error())
 				}
 
 				// only einsy related metrics
 				if printerBoards[cfg.Type] == PrinterBoardTypeEinsy {
-					settings, err := printer.GetSettings()
+					settings, err := printer.Settings()
 
 					if err != nil {
-						log.Error().Msg("Error while scraping settings endpoint at " + cfg.Address + " - " + err.Error())
+						log.Error().Msg("Error while scraping settings endpoint at " + printer.Address() + " - " + err.Error())
 					} else {
 
 						printerFarmMode := prometheus.MustNewConstMetric(
 							collector.printerFarmMode, prometheus.GaugeValue,
 							BoolToFloat(settings.Printer.FarmMode),
-							GetLabels(cfg, job)...)
+							printer.GetMetricLabels(job)...)
 
 						ch <- printerFarmMode
 
 					}
 
-					cameras, err := printer.GetCameras()
+					cameras, err := printer.Cameras()
 
 					if err != nil {
-						log.Error().Msg("Error while scraping cameras endpoint at " + cfg.Address + " - " + err.Error())
+						log.Error().Msg("Error while scraping cameras endpoint at " + printer.Address() + " - " + err.Error())
 					} else {
 
 						for _, v := range cameras.CameraList {
 							printerCamera := prometheus.MustNewConstMetric(
 								collector.printerCameras, prometheus.GaugeValue,
 								BoolToFloat(v.Connected),
-								GetLabels(cfg, job, v.CameraID, v.Config.Name, v.Config.Resolution)...)
+								printer.GetMetricLabels(job, v.CameraID, v.Config.Name, v.Config.Resolution)...)
 							ch <- printerCamera
 						}
 					}
@@ -223,7 +223,7 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 						printerFiles := prometheus.MustNewConstMetric(
 							collector.printerFiles, prometheus.GaugeValue,
 							float64(len(v.Children)),
-							GetLabels(cfg, job, v.Display)...)
+							printer.GetMetricLabels(job, v.Display)...)
 						ch <- printerFiles
 					}
 
@@ -232,7 +232,7 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 				printerInfo := prometheus.MustNewConstMetric(
 					collector.printerInfo, prometheus.GaugeValue,
 					1,
-					GetLabels(cfg, job, version.API, version.Server, version.Text, info.Name, info.Location, info.Serial, info.Hostname)...)
+					printer.GetMetricLabels(job, version.API, version.Server, version.Text, info.Name, info.Location, info.Serial, info.Hostname)...)
 
 				ch <- printerInfo
 
@@ -254,35 +254,35 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 				printSpeed := prometheus.MustNewConstMetric(
 					collector.printerPrintSpeedRatio, prometheus.GaugeValue,
 					printerdata.Telemetry.PrintSpeed/100,
-					cfg.Address, cfg.Type, cfg.Name, job.Job.File.Name, job.Job.File.Path)
+					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
 
 				ch <- printSpeed
 
 				printTime := prometheus.MustNewConstMetric(
 					collector.printerPrintTime, prometheus.GaugeValue,
 					job.Progress.PrintTime,
-					cfg.Address, cfg.Type, cfg.Name, job.Job.File.Name, job.Job.File.Path)
+					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
 
 				ch <- printTime
 
 				printTimeRemaining := prometheus.MustNewConstMetric(
 					collector.printerPrintTimeRemaining, prometheus.GaugeValue,
 					job.Progress.PrintTimeLeft,
-					cfg.Address, cfg.Type, cfg.Name, job.Job.File.Name, job.Job.File.Path)
+					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
 
 				ch <- printTimeRemaining
 
 				printProgress := prometheus.MustNewConstMetric(
 					collector.printerPrintProgress, prometheus.GaugeValue,
 					job.Progress.Completion,
-					cfg.Address, cfg.Type, cfg.Name, job.Job.File.Name, job.Job.File.Path)
+					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
 
 				ch <- printProgress
 
 				material := prometheus.MustNewConstMetric(
 					collector.printerMaterial, prometheus.GaugeValue,
 					BoolToFloat(!(strings.Contains(printerdata.Telemetry.Material, "-"))),
-					cfg.Address, cfg.Type, cfg.Name, job.Job.File.Name, job.Job.File.Path, printerdata.Telemetry.Material)
+					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path, printerdata.Telemetry.Material)...)
 
 				ch <- material
 
@@ -390,7 +390,7 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 			printerStatus := prometheus.MustNewConstMetric(
 				collector.printerStatus, prometheus.GaugeValue,
 				getStateFlag(printerdata),
-				cfg.Address, cfg.Type, cfg.Name, job.Job.File.Name, job.Job.File.Path, printerdata.State.Text)
+				append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path, printerdata.State.Text)...)
 
 			ch <- printerStatus
 
@@ -410,11 +410,11 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 			ch <- printerToolTemp
 
 			printerUp = prometheus.MustNewConstMetric(collector.printerUp, prometheus.GaugeValue,
-				1, cfg.Address, cfg.Type, cfg.Name)
+				1, printer.GetBaseLabels()...)
 
 			ch <- printerUp
 
-			log.Debug().Msg("Scraping done at " + cfg.Address)
+			log.Debug().Msg("Scraping done at " + printer.Address())
 		}(cfg)
 	}
 	wg.Wait()

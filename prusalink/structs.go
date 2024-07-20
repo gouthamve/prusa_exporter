@@ -1,7 +1,7 @@
 package prusalink
 
-// Version is a struct that holds the version information of the printer - buddy, einsy and sl
-type Version struct {
+// VersionJSON is a struct that holds the version information of the printer - buddy, einsy and sl
+type VersionJSON struct {
 	API          string `json:"api"`
 	Server       string `json:"server"`
 	Original     string `json:"original"`
@@ -14,8 +14,8 @@ type Version struct {
 	Hostname string `json:"hostname"`
 }
 
-// Job is a struct that contains data about print job
-type Job struct {
+// JobJSON is a struct that contains data about print job
+type JobJSON struct {
 	State string `json:"state"`
 	Job   struct {
 		EstimatedPrintTime float64 `json:"estimatedPrintTime"`
@@ -110,8 +110,8 @@ type PrinterJSON struct {
 	} `json:"storage"`
 }
 
-// Files is a struct that contains data about the files on the printer
-type Files struct {
+// FilesJSON is a struct that contains data about the files on the printer
+type FilesJSON struct {
 	Files []struct {
 		Name     string `json:"name"`
 		Path     string `json:"path"`
@@ -140,8 +140,8 @@ type Files struct {
 	} `json:"files"`
 }
 
-// JobV1 is a struct that contains data about the print job from path /api/v1/job
-type JobV1 struct {
+// JobV1JSON is a struct that contains data about the print job from path /api/v1/job
+type JobV1JSON struct {
 	ID                  float64 `json:"id"`
 	State               string  `json:"state"`
 	Progress            float64 `json:"progress"`
@@ -170,8 +170,8 @@ type JobV1 struct {
 	} `json:"file"`
 }
 
-// Status is struct that returns /api/v1/status endpoint. Unfortunately, Buddy returns different schema, than Einsy and second struct is needed
-type Status struct {
+// StatusJSON is struct that returns /api/v1/status endpoint. Unfortunately, Buddy returns different schema, than Einsy and second struct is needed
+type StatusJSON struct {
 	Job struct {
 		ID            float64 `json:"id"`
 		Progress      float64 `json:"progress"`
@@ -194,8 +194,8 @@ type Status struct {
 	} `json:"printer"`
 }
 
-// StorageV1 is a struct that contains data about the storage from path /api/v1/storage
-type StorageV1 struct {
+// StorageV1JSON is a struct that contains data about the storage from path /api/v1/storage
+type StorageV1JSON struct {
 	StorageList []struct {
 		Path        string  `json:"path"`
 		Name        string  `json:"name"`
@@ -209,8 +209,8 @@ type StorageV1 struct {
 	} `json:"storage_list"`
 }
 
-// Info is a struct that contains data about the printer
-type Info struct {
+// InfoJSON is a struct that contains data about the printer
+type InfoJSON struct {
 	Mmu               bool    `json:"mmu"`
 	Name              string  `json:"name"`
 	Location          string  `json:"location"`
@@ -223,8 +223,8 @@ type Info struct {
 	Port              float64 `json:"port"`
 }
 
-// PrinterProfiles is a struct that contains data about the printer profiles
-type PrinterProfiles struct {
+// PrinterProfilesJSON is a struct that contains data about the printer profiles
+type PrinterProfilesJSON struct {
 	Profiles []struct {
 		Color    string `json:"color"`
 		Current  bool   `json:"current"`
@@ -243,8 +243,8 @@ type PrinterProfiles struct {
 	} `json:"profiles"`
 }
 
-// Settings is a struct that contains data about the printer settings
-type Settings struct {
+// SettingsJSON is a struct that contains data about the printer settings
+type SettingsJSON struct {
 	APIKey   string `json:"api-key"`
 	Username string `json:"username"`
 	Printer  struct {
@@ -254,8 +254,8 @@ type Settings struct {
 	} `json:"printer"`
 }
 
-// Cameras is a struct that contains data about the cameras connected to the printer
-type Cameras struct {
+// CamerasJSON is a struct that contains data about the cameras connected to the printer
+type CamerasJSON struct {
 	CameraList []struct {
 		CameraID string `json:"camera_id"`
 		Config   struct {

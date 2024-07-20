@@ -44,14 +44,6 @@ var (
 	configuration config.Config
 )
 
-// GetLabels is used to get the labels for the given printer and job
-func GetLabels(printer config.Printers, job Job, labelValues ...string) []string {
-	if job == (Job{}) {
-		return append([]string{printer.Address, printer.Type, printer.Name, "", ""}, labelValues...)
-	}
-	return append([]string{printer.Address, printer.Type, printer.Name, job.Job.File.Name, job.Job.File.Path}, labelValues...)
-}
-
 // BoolToFloat is used for basic parsing boolean to float64
 // 0.0 for false, 1.0 for true
 func BoolToFloat(boolean bool) float64 {
@@ -143,65 +135,9 @@ func accessPrinterEndpoint(path string, printer config.Printers) ([]byte, error)
 	return result, nil
 }
 
-// GetVersion is used to get the printer's version API endpoint
-func GetVersion(printer config.Printers) (Version, error) {
-	var version Version
-	response, err := accessPrinterEndpoint("version", printer)
-
-	if err != nil {
-		return version, err
-	}
-
-	err = json.Unmarshal(response, &version)
-
-	return version, err
-}
-
-// GetJob is used to get the printer's job API endpoint
-func GetJob(printer config.Printers) (Job, error) {
-	var job Job
-	response, err := accessPrinterEndpoint("job", printer)
-
-	if err != nil {
-		return job, err
-	}
-
-	err = json.Unmarshal(response, &job)
-
-	return job, err
-}
-
-// GetPrinter is used to get the printer's printer API endpoint
-func GetPrinter(printer config.Printers) (PrinterJSON, error) {
-	var printerData PrinterJSON
-	response, err := accessPrinterEndpoint("printer", printer)
-
-	if err != nil {
-		return printerData, err
-	}
-
-	err = json.Unmarshal(response, &printerData)
-
-	return printerData, err
-}
-
-// GetFiles is used to get the printer's files API endpoint
-func GetFiles(printer config.Printers) (Files, error) {
-	var files Files
-	response, err := accessPrinterEndpoint("files?recursive=true", printer)
-
-	if err != nil {
-		return files, err
-	}
-
-	err = json.Unmarshal(response, &files)
-
-	return files, err
-}
-
 // GetJobV1 is used to get the printer's job v1 API endpoint
-func GetJobV1(printer config.Printers) (JobV1, error) {
-	var job JobV1
+func GetJobV1(printer config.Printers) (JobV1JSON, error) {
+	var job JobV1JSON
 	response, err := accessPrinterEndpoint("v1/job", printer)
 
 	if err != nil {
@@ -213,23 +149,9 @@ func GetJobV1(printer config.Printers) (JobV1, error) {
 	return job, err
 }
 
-// GetStatus is used to get Buddy status endpoint
-func GetStatus(printer config.Printers) (Status, error) {
-	var status Status
-	response, err := accessPrinterEndpoint("v1/status", printer)
-
-	if err != nil {
-		return status, err
-	}
-
-	err = json.Unmarshal(response, &status)
-
-	return status, err
-}
-
 // GetStorageV1 is used to get the printer's storage v1 API endpoint
-func GetStorageV1(printer config.Printers) (StorageV1, error) {
-	var storage StorageV1
+func GetStorageV1(printer config.Printers) (StorageV1JSON, error) {
+	var storage StorageV1JSON
 	response, err := accessPrinterEndpoint("v1/storage", printer)
 
 	if err != nil {
@@ -241,51 +163,9 @@ func GetStorageV1(printer config.Printers) (StorageV1, error) {
 	return storage, err
 }
 
-// GetInfo is used to get the printer's info API endpoint
-func GetInfo(printer config.Printers) (Info, error) {
-	var info Info
-	response, err := accessPrinterEndpoint("v1/info", printer)
-
-	if err != nil {
-		return info, err
-	}
-
-	err = json.Unmarshal(response, &info)
-
-	return info, err
-}
-
-// GetSettings is used to get the printer's settings API endpoint
-func GetSettings(printer config.Printers) (Settings, error) {
-	var settings Settings
-	response, err := accessPrinterEndpoint("settings", printer)
-
-	if err != nil {
-		return settings, err
-	}
-
-	err = json.Unmarshal(response, &settings)
-
-	return settings, err
-}
-
-// GetCameras is used to get the printer's cameras API endpoint
-func GetCameras(printer config.Printers) (Cameras, error) {
-	var cameras Cameras
-	response, err := accessPrinterEndpoint("v1/cameras", printer)
-
-	if err != nil {
-		return cameras, err
-	}
-
-	err = json.Unmarshal(response, &cameras)
-
-	return cameras, err
-}
-
 // GetPrinterProfiles is used to get the printer's printerprofiles API endpoint
-func GetPrinterProfiles(printer config.Printers) (PrinterProfiles, error) {
-	var profiles PrinterProfiles
+func GetPrinterProfiles(printer config.Printers) (PrinterProfilesJSON, error) {
+	var profiles PrinterProfilesJSON
 	response, err := accessPrinterEndpoint("v1/printerprofiles", printer)
 
 	if err != nil {
@@ -295,42 +175,6 @@ func GetPrinterProfiles(printer config.Printers) (PrinterProfiles, error) {
 	err = json.Unmarshal(response, &profiles)
 
 	return profiles, err
-}
-
-// GetPrinterType returns the printer type of the given printer - e.g. "MINI", "MK4", "XL", "I3MK3S", "I3MK3", "I3MK25S",
-func GetPrinterType(printer config.Printers) (string, error) {
-	version, err := GetVersion(printer)
-	if err != nil {
-		return "unknown", err
-	}
-
-	printerType := version.Hostname
-
-	if version.Hostname == "" {
-		if version.Original == "" {
-			info, err := GetInfo(printer)
-			if err != nil {
-				return "unknown", err
-			}
-			printerType = info.Hostname
-		} else {
-			printerType = version.Original
-		}
-	} else if version.Original != "" {
-		printerType = version.Original
-	}
-
-	if printerTypes[printerType] != "" {
-		printerType = printerTypes[printerType]
-	}
-
-	if printerType == "" {
-		printerType = "unknown"
-	}
-
-	log.Trace().Msg(printerType + " detected for " + printer.Address + " (" + printer.Name + ")")
-
-	return printerType, nil
 }
 
 // ProbePrinter is used to probe the printer - just testing the connection
