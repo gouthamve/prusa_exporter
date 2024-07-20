@@ -78,7 +78,7 @@ func NewCollector(config config.Config) *Collector {
 		printerBedTempTarget:      prometheus.NewDesc("prusa_bed_target_temperature_celsius", "Target bed temp", defaultLabels, nil),
 		printerBedTempOffset:      prometheus.NewDesc("prusa_bed_offset_temperature_celsius", "Offset bed temp", defaultLabels, nil),
 		printerChamberTemp:        prometheus.NewDesc("prusa_chamber_temperature_celsius", "Status of the printer chamber temp", defaultLabels, nil),
-		printerChamberTempTarget:  prometheus.NewDesc("prusa_chamber_target_temperature_celsius", "Traget chamber temp", defaultLabels, nil),
+		printerChamberTempTarget:  prometheus.NewDesc("prusa_chamber_target_temperature_celsius", "Target chamber temp", defaultLabels, nil),
 		printerChamberTempOffset:  prometheus.NewDesc("prusa_chamber_offset_temperature_celsius", "Offset chamber temp", defaultLabels, nil),
 		printerToolTemp:           prometheus.NewDesc("prusa_tool_temperature_celsius", "Status of the printer tool temp", append(defaultLabels, "tool"), nil),
 		printerToolTempTarget:     prometheus.NewDesc("prusa_tool_target_temperature_celsius", "Target tool temp", append(defaultLabels, "tool"), nil),

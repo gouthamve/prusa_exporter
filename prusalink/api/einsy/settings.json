@@ -1,0 +1,9 @@
+{
+    "api-key": "your-api-key",
+    "username": "maker",
+    "printer": {
+        "name": "brrr",
+        "Location": "Antartica",
+        "farm_mode": true
+    }
+}
