@@ -13,18 +13,18 @@ import (
 
 var (
 	printerBoards = map[string]string{
-		"MINI":    "buddy",
-		"MK35":    "buddy",
-		"MK39":    "buddy",
-		"MK4":     "buddy",
-		"XL":      "buddy",
-		"IX":      "buddy",
-		"I3MK3S":  "einsy",
-		"I3MK3":   "einsy",
-		"I3MK25S": "einsy",
-		"I3MK25":  "einsy",
-		"SL1":     "sl",
-		"SL1S":    "sl",
+		"MINI":    PrinterBoardTypeBuddy,
+		"MK35":    PrinterBoardTypeBuddy,
+		"MK39":    PrinterBoardTypeBuddy,
+		"MK4":     PrinterBoardTypeBuddy,
+		"XL":      PrinterBoardTypeBuddy,
+		"IX":      PrinterBoardTypeBuddy,
+		"I3MK3S":  PrinterBoardTypeEinsy,
+		"I3MK3":   PrinterBoardTypeEinsy,
+		"I3MK25S": PrinterBoardTypeEinsy,
+		"I3MK25":  PrinterBoardTypeEinsy,
+		"SL1":     PrinterBoardTypeSL,
+		"SL1S":    PrinterBoardTypeSL,
 	}
 
 	// used for autodetection - does not work with changed hostname :sad:
@@ -65,7 +65,7 @@ func BoolToFloat(boolean bool) float64 {
 // getStateFlag returns the state flag for the given printer.
 // The state flag is a float64 value representing the current state of the printer.
 // It is used for tracking the printer's status and progress.
-func getStateFlag(printer Printer) float64 {
+func getStateFlag(printer PrinterJSON) float64 {
 	if printer.State.Flags.Operational {
 		return 1
 	} else if printer.State.Flags.Prepared {
@@ -172,8 +172,8 @@ func GetJob(printer config.Printers) (Job, error) {
 }
 
 // GetPrinter is used to get the printer's printer API endpoint
-func GetPrinter(printer config.Printers) (Printer, error) {
-	var printerData Printer
+func GetPrinter(printer config.Printers) (PrinterJSON, error) {
+	var printerData PrinterJSON
 	response, err := accessPrinterEndpoint("printer", printer)
 
 	if err != nil {

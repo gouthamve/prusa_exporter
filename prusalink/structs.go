@@ -44,8 +44,9 @@ type Job struct {
 	} `json:"progress"`
 }
 
-// Printer is a struct that contains data about the printer - merged buddy and einsy
-type Printer struct {
+// PrinterJSON is a struct that contains data about the printer - merged buddy and einsy
+// TODO(gouthamve): Find better name for this.
+type PrinterJSON struct {
 	Telemetry struct {
 		TempBed     float64 `json:"temp-bed"`
 		TempNozzle  float64 `json:"temp-nozzle"`
