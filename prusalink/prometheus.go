@@ -1,6 +1,7 @@
 package prusalink
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -20,6 +21,7 @@ type Collector struct {
 	printerMaterial           *prometheus.Desc
 	printerUp                 *prometheus.Desc
 	printerNozzleSize         *prometheus.Desc
+	printerJobInfo            *prometheus.Desc
 	printerStatus             *prometheus.Desc
 	printerAxis               *prometheus.Desc
 	printerFlow               *prometheus.Desc
@@ -60,6 +62,7 @@ func NewCollector(config config.Config) *Collector {
 		printerPrintTime:          prometheus.NewDesc("prusa_print_time_seconds", "Returns information about current print time.", defaultLabels, nil),
 		printerUp:                 prometheus.NewDesc("prusa_up", "Return information about online printers. If printer is registered as offline then returned value is 0.", []string{"printer_address", "printer_model", "printer_name"}, nil),
 		printerNozzleSize:         prometheus.NewDesc("prusa_nozzle_size_meters", "Returns information about selected nozzle size.", defaultLabels, nil),
+		printerJobInfo:            prometheus.NewDesc("prusa_job_info", "Returns information about current job.", append(defaultLabels, "printer_job_id"), nil),
 		printerStatus:             prometheus.NewDesc("prusa_status_info", "Returns information status of printer.", append(defaultLabels, "printer_state"), nil),
 		printerAxis:               prometheus.NewDesc("prusa_axis", "Returns information about position of axis.", append(defaultLabels, "printer_axis"), nil),
 		printerFlow:               prometheus.NewDesc("prusa_print_flow_ratio", "Returns information about of filament flow in ratio (0.0 - 1.0).", defaultLabels, nil),
@@ -98,6 +101,7 @@ func (collector *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.printerMaterial
 	ch <- collector.printerUp
 	ch <- collector.printerNozzleSize
+	ch <- collector.printerJobInfo
 	ch <- collector.printerStatus
 	ch <- collector.printerAxis
 	ch <- collector.printerFlow
@@ -254,35 +258,36 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 				printSpeed := prometheus.MustNewConstMetric(
 					collector.printerPrintSpeedRatio, prometheus.GaugeValue,
 					printerdata.Telemetry.PrintSpeed/100,
-					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
+					printer.GetMetricLabels(job)...)
 
 				ch <- printSpeed
 
 				printTime := prometheus.MustNewConstMetric(
 					collector.printerPrintTime, prometheus.GaugeValue,
-					job.Progress.PrintTime,
-					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
+					job.Progress.TimeElapsed,
+					printer.GetMetricLabels(job)...)
 
 				ch <- printTime
 
 				printTimeRemaining := prometheus.MustNewConstMetric(
 					collector.printerPrintTimeRemaining, prometheus.GaugeValue,
-					job.Progress.PrintTimeLeft,
-					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
+					job.Progress.TimeLeft,
+					printer.GetMetricLabels(job)...)
 
 				ch <- printTimeRemaining
 
 				printProgress := prometheus.MustNewConstMetric(
 					collector.printerPrintProgress, prometheus.GaugeValue,
-					job.Progress.Completion,
-					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path)...)
+					job.Progress.PercentDone,
+					printer.GetMetricLabels(job)...)
 
 				ch <- printProgress
 
 				material := prometheus.MustNewConstMetric(
 					collector.printerMaterial, prometheus.GaugeValue,
 					BoolToFloat(!(strings.Contains(printerdata.Telemetry.Material, "-"))),
-					append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path, printerdata.Telemetry.Material)...)
+					printer.GetMetricLabels(job, printerdata.Telemetry.Material)...,
+				)
 
 				ch <- material
 
@@ -387,10 +392,14 @@ func (collector *Collector) Collect(ch chan<- prometheus.Metric) {
 
 			ch <- printerBedTempOffset
 
+			printerJobInfo := prometheus.MustNewConstMetric(collector.printerJobInfo, prometheus.GaugeValue,
+				1, printer.GetMetricLabels(job, fmt.Sprintf("%d", job.ID))...)
+			ch <- printerJobInfo
+
 			printerStatus := prometheus.MustNewConstMetric(
 				collector.printerStatus, prometheus.GaugeValue,
 				getStateFlag(printerdata),
-				append(printer.GetBaseLabels(), job.Job.File.Name, job.Job.File.Path, printerdata.State.Text)...)
+				printer.GetMetricLabels(job, printerdata.State.Text)...)
 
 			ch <- printerStatus
 

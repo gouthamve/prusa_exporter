@@ -142,7 +142,7 @@ type FilesJSON struct {
 
 // JobV1JSON is a struct that contains data about the print job from path /api/v1/job
 type JobV1JSON struct {
-	ID                  float64 `json:"id"`
+	ID                  int     `json:"id"`
 	State               string  `json:"state"`
 	Progress            float64 `json:"progress"`
 	TimeRemaining       float64 `json:"time_remaining"`

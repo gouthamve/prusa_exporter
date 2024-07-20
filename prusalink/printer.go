@@ -22,7 +22,7 @@ type Printer interface {
 	Address() string
 
 	PrinterType() (string, error)
-	Job() (JobJSON, error)
+	Job() (Job, error)
 	Printer() (PrinterJSON, error)
 	Files() (FilesJSON, error)
 	Version() (VersionJSON, error)
@@ -32,7 +32,7 @@ type Printer interface {
 	Cameras() (CamerasJSON, error)
 
 	GetBaseLabels() []string
-	GetMetricLabels(job JobJSON, labelValues ...string) []string
+	GetMetricLabels(job Job, labelValues ...string) []string
 }
 
 func NewPrinter(cfg config.Printers) (Printer, error) {
@@ -49,11 +49,9 @@ func NewPrinter(cfg config.Printers) (Printer, error) {
 
 	switch printerBoards[cfg.Type] {
 	case PrinterBoardTypeBuddy:
-		return buddyPrinter{bp}, nil
-	case PrinterBoardTypeEinsy:
-		return einsyPrinter{bp}, nil
-	case PrinterBoardTypeSL:
-		return slPrinter{bp}, nil
+		return v1APIPrinter{bp}, nil
+	case PrinterBoardTypeSL, PrinterBoardTypeEinsy:
+		return bp, nil
 	default:
 		return nil, ErrUnknownPrinterType
 	}
@@ -106,17 +104,27 @@ func (p basePrinter) PrinterType() (string, error) {
 	return printerType, nil
 }
 
-func (p basePrinter) Job() (JobJSON, error) {
-	var job JobJSON
+func (p basePrinter) Job() (Job, error) {
+	var jobjson JobJSON
 	response, err := accessPrinterEndpoint("job", p.cfg)
 
 	if err != nil {
-		return job, err
+		return Job{}, err
 	}
 
-	err = json.Unmarshal(response, &job)
+	err = json.Unmarshal(response, &jobjson)
+	if err != nil {
+		return Job{}, err
+	}
 
-	return job, err
+	job := Job{}
+	job.File.Name = jobjson.Job.File.Name
+	job.File.Path = jobjson.Job.File.Path
+	job.Progress.PercentDone = jobjson.Progress.Completion
+	job.Progress.TimeLeft = jobjson.Progress.PrintTimeLeft
+	job.Progress.TimeElapsed = jobjson.Progress.PrintTime
+
+	return job, nil
 }
 
 func (p basePrinter) Printer() (PrinterJSON, error) {
@@ -214,21 +222,50 @@ func (p basePrinter) GetBaseLabels() []string {
 	return []string{p.cfg.Address, p.cfg.Type, p.cfg.Name}
 }
 
-func (p basePrinter) GetMetricLabels(job JobJSON, labelValues ...string) []string {
-	if job == (JobJSON{}) {
+func (p basePrinter) GetMetricLabels(job Job, labelValues ...string) []string {
+	if job == (Job{}) {
 		return append([]string{p.cfg.Address, p.cfg.Type, p.cfg.Name, "", ""}, labelValues...)
 	}
-	return append([]string{p.cfg.Address, p.cfg.Type, p.cfg.Name, job.Job.File.Name, job.Job.File.Path}, labelValues...)
+	return append([]string{p.cfg.Address, p.cfg.Type, p.cfg.Name, job.File.Name, job.File.Path}, labelValues...)
 }
 
-type buddyPrinter struct {
+type v1APIPrinter struct {
 	basePrinter
 }
 
-type einsyPrinter struct {
-	basePrinter
+func (p v1APIPrinter) Job() (Job, error) {
+	var jobV1 JobV1JSON
+	response, err := accessPrinterEndpoint("v1/job", p.cfg)
+	if err != nil {
+		return Job{}, err
+	}
+
+	err = json.Unmarshal(response, &jobV1)
+	if err != nil {
+		return Job{}, err
+	}
+
+	job := Job{}
+	job.ID = jobV1.ID
+	job.Progress.PercentDone = jobV1.Progress
+	job.Progress.TimeLeft = jobV1.TimeRemaining
+	job.Progress.TimeElapsed = jobV1.TimePrinting
+
+	job.File.Name = jobV1.File.DisplayName
+	job.File.Path = jobV1.File.Path + "/" + jobV1.File.Name
+
+	return job, nil
 }
 
-type slPrinter struct {
-	basePrinter
+type Job struct {
+	File struct {
+		Name string
+		Path string
+	}
+	Progress struct {
+		PercentDone float64
+		TimeLeft    float64
+		TimeElapsed float64
+	}
+	ID int
 }

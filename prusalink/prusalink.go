@@ -135,20 +135,6 @@ func accessPrinterEndpoint(path string, printer config.Printers) ([]byte, error)
 	return result, nil
 }
 
-// GetJobV1 is used to get the printer's job v1 API endpoint
-func GetJobV1(printer config.Printers) (JobV1JSON, error) {
-	var job JobV1JSON
-	response, err := accessPrinterEndpoint("v1/job", printer)
-
-	if err != nil {
-		return job, err
-	}
-
-	err = json.Unmarshal(response, &job)
-
-	return job, err
-}
-
 // GetStorageV1 is used to get the printer's storage v1 API endpoint
 func GetStorageV1(printer config.Printers) (StorageV1JSON, error) {
 	var storage StorageV1JSON

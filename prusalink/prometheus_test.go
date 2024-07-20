@@ -46,6 +46,9 @@ prusa_fan_speed_rpm{fan="print",printer_address="PRINTER_ADDRESS",printer_job_na
 # HELP prusa_info Returns information about printer.
 # TYPE prusa_info gauge
 prusa_info{api_version="2.0.0",printer_address="PRINTER_ADDRESS",printer_hostname="PrusaMK4",printer_job_name="multiple_grots_0.4n_0.15mm_PLA,PLA,PLA,PLA_XLIS_5h36m.bgcode",printer_job_path="/usb/MULTIP~1.BGC",printer_location="",printer_model="MK4",printer_name="",prusalink_name="",serial_number="10589-3742441631728135",server_version="2.1.2",version_text="PrusaLink"} 1
+# HELP prusa_job_info Returns information about current job.
+# TYPE prusa_job_info gauge
+prusa_job_info{printer_address="PRINTER_ADDRESS",printer_job_id="109",printer_job_name="multiple_grots_0.4n_0.15mm_PLA,PLA,PLA,PLA_XLIS_5h36m.bgcode",printer_job_path="/usb/MULTIP~1.BGC",printer_model="MK4",printer_name=""} 1
 # HELP prusa_material_info Returns information about loaded filament. Returns 0 if there is no loaded filament
 # TYPE prusa_material_info gauge
 prusa_material_info{printer_address="PRINTER_ADDRESS",printer_filament="PLA",printer_job_name="multiple_grots_0.4n_0.15mm_PLA,PLA,PLA,PLA_XLIS_5h36m.bgcode",printer_job_path="/usb/MULTIP~1.BGC",printer_model="MK4",printer_name=""} 1
@@ -134,6 +137,9 @@ prusa_files_count{printer_address="PRINTER_ADDRESS",printer_job_name="fosdem_0.2
 # HELP prusa_info Returns information about printer.
 # TYPE prusa_info gauge
 prusa_info{api_version="0.9.0-legacy",printer_address="PRINTER_ADDRESS",printer_hostname="connect.prusa3d.com",printer_job_name="fosdem_0.2mm_PLA,PLA_MK3SMMU3_7h16m.gcode",printer_job_path="/SD Card/fosdem_0.2mm_PLA,PLA_MK3SMMU3_7h16m.gcode",printer_location="Elf on a shelf",printer_model="I3MK3S",printer_name="",prusalink_name="MK3S with MMU3",serial_number="CZPX5222X004XK04220",server_version="0.7.2",version_text="PrusaLink 0.7.2"} 1
+# HELP prusa_job_info Returns information about current job.
+# TYPE prusa_job_info gauge
+prusa_job_info{printer_address="PRINTER_ADDRESS",printer_job_id="0",printer_job_name="fosdem_0.2mm_PLA,PLA_MK3SMMU3_7h16m.gcode",printer_job_path="/SD Card/fosdem_0.2mm_PLA,PLA_MK3SMMU3_7h16m.gcode",printer_model="I3MK3S",printer_name=""} 1
 # HELP prusa_material_info Returns information about loaded filament. Returns 0 if there is no loaded filament
 # TYPE prusa_material_info gauge
 prusa_material_info{printer_address="PRINTER_ADDRESS",printer_filament=" - ",printer_job_name="fosdem_0.2mm_PLA,PLA_MK3SMMU3_7h16m.gcode",printer_job_path="/SD Card/fosdem_0.2mm_PLA,PLA_MK3SMMU3_7h16m.gcode",printer_model="I3MK3S",printer_name=""} 0
@@ -223,6 +229,9 @@ prusa_cpu_temperature_celsius{printer_address="PRINTER_ADDRESS",printer_job_name
 prusa_fan_speed_rpm{fan="blower",printer_address="PRINTER_ADDRESS",printer_job_name="",printer_job_path="",printer_model="SL1",printer_name=""} 0
 prusa_fan_speed_rpm{fan="rear",printer_address="PRINTER_ADDRESS",printer_job_name="",printer_job_path="",printer_model="SL1",printer_name=""} 0
 prusa_fan_speed_rpm{fan="uv",printer_address="PRINTER_ADDRESS",printer_job_name="",printer_job_path="",printer_model="SL1",printer_name=""} 0
+# HELP prusa_job_info Returns information about current job.
+# TYPE prusa_job_info gauge
+prusa_job_info{printer_address="PRINTER_ADDRESS",printer_job_id="0",printer_job_name="",printer_job_path="",printer_model="SL1",printer_name=""} 1
 # HELP prusa_status_info Returns information status of printer.
 # TYPE prusa_status_info gauge
 prusa_status_info{printer_address="PRINTER_ADDRESS",printer_job_name="",printer_job_path="",printer_model="SL1",printer_name="",printer_state="Ready"} 1
